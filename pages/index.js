@@ -1,65 +1,70 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import Link from 'next/link';
+import { useQuery, gql } from '@apollo/client';
 
-export default function Home() {
+function useSkiResortsQuery(query) {
+  return useQuery(
+    gql`
+      query SkiResortsQuery($query: String) {
+        list: listSkiResorts(query: $query) {
+          key
+          name
+        }
+      }
+    `,
+    {
+      variables: { query },
+    }
+  );
+}
+
+export default function Index() {
+  const { loading, error, data, refetch } = useSkiResortsQuery();
+
+  const hangleQueryChange = e => {
+    const query = e.target.value;
+    refetch({ query });
+  };
+
+  if (loading) return <p>Loading....</p>;
+  if (error) return <p>Error...</p>;
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
-  )
+    <>
+      <header>
+        <input placeholder="Filter resorts..." onChange={hangleQueryChange} />
+      </header>
+      <ul>
+        {data.list.map(item => (
+          <li kye={item.key}>
+            <Link href={`/${encodeURIComponent(item.key)}`}>
+              <a>{item.name}</a>
+            </Link>
+          </li>
+        ))}
+        {data.list.length === 0 && <li>No resorts found.</li>}
+      </ul>
+      <style jsx>{`
+        header {
+          margin-top: 1rem;
+        }
+        input {
+          font-size: 1.25rem;
+          width: 100%;
+          padding: 0.5rem;
+          border-radius: 0.25rem;
+          border: 1px solid #555;
+        }
+        input:focus {
+          border: 1px solid #fff;
+        }
+        ul {
+          list-style: none;
+          padding: 0;
+        }
+        ul > li {
+          margin-top: 0.5rem;
+        }
+      `}</style>
+    </>
+  );
 }
